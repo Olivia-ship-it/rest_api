@@ -7,7 +7,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-
+use App\Controller\AuthController;
 
 /**
  * @Route("/api", name="api_endpoint")
@@ -15,6 +15,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class UserController extends AbstractController
 {
+
     /**
      * @Route("/register", name="createUser", methods={"POST"})
      */
@@ -29,13 +30,35 @@ class UserController extends AbstractController
         $user->setFirstname($request->get("firstname"));
         $user->setLastname($request->get("lastname"));
 
-
+        if($this->getDoctrine()->getRepository(User::class)->findOneBy(['login' => $request->get('login')])){
+            return $this->json(['error' => 'This login is already in use: '.$request->get('login')], 401);
+        }
+        
         $entityManager->persist($user);
         $entityManager->flush();
 
-        return new Response('saved new user with id '.$user->getId(), 201);
+        return $this->json([
+            'success' => 'Saved new user with id '.$user->getId(),
+        ], 201);
+
     }
 
+    function generateRandomString($length = 255):string {
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $charactersLength = strlen($characters);
+        $randomString = '';
+        for ($i = 0; $i < $length; $i++) {
+            $randomString .= $characters[rand(0, $charactersLength - 1)];
+        }
+        return $randomString;
+    }
+    function getUserFromToken($token): ?object {
+        if(!$token || $token == ""){
+            return null;
+        }
+        return $this->getDoctrine()->getRepository(User::class)->findOneBy(['token' => $token]);
+    }
+    
     /**
      * @Route("/login", name="loginUser", methods={"GET"})
      */
@@ -43,54 +66,68 @@ class UserController extends AbstractController
     {
         $entityManager = $this->getDoctrine()->getManager();
 
-
-
-
-        $entityManager->persist($user);
-        $entityManager->flush();
-
-        return new Response('saved new user with id '.$user->getId(), 201);
-    }
-
-    /**
-     * @Route("/user/{id}", name="showUser", methods={"GET"})
-     */
-    public function show(int $id): Response
-    {
-        $user = $this->getDoctrine()
-            ->getRepository(User::class)
-            ->find($id);
-
-        if (!$user) {
-            return $this->json([
-                'error' => 'Could not find user with id: '.$id,
-            ]);
+        try {
+            $user = $this->getDoctrine()->getRepository(User::class)->findOneBy(['login' => $request->get('login')]);
+        } catch (Exception $e){
+            return $this->json(['error' => 'Wrong login or password'], 401);
         }
 
+        if(!$request->get('login')){
+            return $this->json(['error' => 'You need to provide a login.'], 400);
+        }
+
+        if(!$request->get('password')){
+            return $this->json(['error' => 'You need to provide a password.'], 400);
+        }
+
+        if($user->getPassword() != $request->get('password')){
+            return $this->json(['error' => 'Wrong login or password'], 401);
+        }
+
+
+        $token = $this->generateRandomString();
+        $user->setToken($token);
+        $entityManager->flush();
+
         return $this->json([
-            'login' => $user->getLogin(),
-            'password' => $user->getPassword(),
-            'email' => $user->getEmail(),
-            'firstname' => $user->getFirstname(),
-            'lastname' => $user->getLastname(),
-        ]);
+            'token' => $token,
+        ], 200);
+
     }
 
     /**
-     * @Route("/user/{id}", name="updateUser", methods={"PUT"})
+     * @Route("/user", name="showUser", methods={"GET"})
      */
-    public function update(int $id, Request $request): Response
+    public function show(Request $request): Response
+    {
+        $token = $request->headers->get('authorization');
+
+        $user = $this->getUserFromToken($token);
+
+        if(!$user){
+            return $this->json(['error' => 'You need to login, in order to acess this page!'], 401);
+        }
+
+        $displayUserWoPasswd = new \stdClass();
+        $displayUserWoPasswd->login = $user->getLogin();
+        $displayUserWoPasswd->email = $user->getEmail();
+        $displayUserWoPasswd->firstname = $user->getFirstname();
+        $displayUserWoPasswd->lastname = $user->getLastname();
+
+        return $this->json($displayUserWoPasswd);
+    }
+
+    /**
+     * @Route("/user", name="updateUser", methods={"PUT"})
+     */
+    public function update(Request $request): Response
     {
         $entityManager = $this->getDoctrine()->getManager();
+        $token = $request->headers->get('authorization');
+        $user = $this->getUserFromToken($token);
 
-        $user = $this->getDoctrine()
-            ->getRepository(User::class)
-            ->find($id);
-
-        if (!$user) {
-            return $this->json([
-                'error' => 'Could not find user with id: '.$id,
-            ]);
+        if(!$user){
+            return $this->json(['error' => 'You are not authorized to change this account information!'], 401);
         }
         
         if ($request->get("login")) {
@@ -98,30 +135,33 @@ class UserController extends AbstractController
         }
 
         if ($request->get("password" )) {
-            $user->setLogin($request->get("password"));
+            $user->setPassword($request->get("password"));
         }
 
         if ($request->get("email")) {
-            $user->setLogin($request->get("email"));
+            $user->setEmail($request->get("email"));
         }
 
         if ($request->get("firstname")) {
-            $user->setLogin($request->get("firstname"));
+            $user->setFirstname($request->get("firstname"));
         }
 
         if ($request->get("lastname")) {
-            $user->setLogin($request->get("lastname"));
+            $user->setLastname($request->get("lastname"));
         }
 
-        if (!$request) {
+        if (!$request->get("lastname") && !$request->get("firstname") && !$request->get("password") && !$request->get("login") && !$request->get("email") ) {
             return $this->json([
-                'error' => 'You did not provide any information to update for user with id: '.$id,
+                'error' => 'You did not provide any information to update for user with login: '.$user->getLogin(),
             ]);
         }
 
         $entityManager->flush();
 
-        return new Response('updated user with id '.$user->getId(), 201);
+
+        return $this->json([
+            'success' => 'Updated provided information to user with login '.$user->getLogin(),
+        ], 200);
     }
 
 
