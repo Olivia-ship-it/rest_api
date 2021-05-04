@@ -25,10 +25,7 @@ class Order
      */
     private $totalPrice;
 
-    /**
-     * @ORM\ManyToMany(targetEntity=Product::class)
-     */
-    private $products;
+
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class, inversedBy="orders")
@@ -36,11 +33,23 @@ class Order
      */
     private $user;
 
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $creationDate;
+
+    /**
+     * @ORM\Column(type="array")
+     */
+    private $products = [];
+
     public function __construct()
     {
         $this->products = new ArrayCollection();
-        $this->user = new ArrayCollection();
+        // $this->user = new ArrayCollection();
+        // $this->creationDate= new \DateTime();
     }
+
 
     public function getId(): ?int
     {
@@ -59,29 +68,6 @@ class Order
         return $this;
     }
 
-    /**
-     * @return Collection|Product[]
-     */
-    public function getProducts(): Collection
-    {
-        return $this->products;
-    }
-
-    public function addProduct(Product $product): self
-    {
-        if (!$this->products->contains($product)) {
-            $this->products[] = $product;
-        }
-
-        return $this;
-    }
-
-    public function removeProduct(Product $product): self
-    {
-        $this->products->removeElement($product);
-
-        return $this;
-    }
 
     public function getUser(): ?User
     {
@@ -91,6 +77,31 @@ class Order
     public function setUser(?User $user): self
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    public function getCreationDate(): ?string
+    {
+        return $this->creationDate;
+    }
+
+    public function setCreationDate(string $creationDate): self
+    {
+        $this->creationDate = $creationDate;
+
+        return $this;
+    }
+
+    public function getProducts(): ?array
+    {
+        
+        return $this->products;
+    }
+
+    public function setProducts(array $products): self
+    {
+        $this->products = $products;
 
         return $this;
     }
