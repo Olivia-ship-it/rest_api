@@ -38,7 +38,11 @@ class UserController extends AbstractController
         $entityManager->flush();
 
         return $this->json([
+<<<<<<< HEAD
             'success' => 'Saved new user!',
+=======
+            'success' => 'Saved new user with id '.$user->getId(),
+>>>>>>> bc86cf45b9d3db376b0beaf58639c9b87c23fa5f
         ], 201);
 
     }

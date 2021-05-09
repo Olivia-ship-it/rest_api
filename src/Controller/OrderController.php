@@ -52,12 +52,21 @@ class OrderController extends AbstractController
         
         foreach($orders as $order)
         {
+<<<<<<< HEAD
             $products = array();
             $products = $order->getProducts();
             $productsOutput = array();
 
             foreach($products as $product) {
                 $productsOutput[] = array(
+=======
+
+            $products = $order->getProducts();
+
+            foreach($products as $product) {
+                $productsOutput[] = array(
+                    'id' => $product->getId(),
+>>>>>>> bc86cf45b9d3db376b0beaf58639c9b87c23fa5f
                     'name' => $product->getName(),
                     'description' => $product->getDescription(),
                     'photo' => $product->getPhoto(),
@@ -65,14 +74,27 @@ class OrderController extends AbstractController
             );
             }
             $output[] = array(
+<<<<<<< HEAD
+=======
+                    'id' => $order->getId(),
+>>>>>>> bc86cf45b9d3db376b0beaf58639c9b87c23fa5f
                     'totalPrice' => $order->getTotalPrice(),
                     'creationDate' => $order->getCreationDate(),
                     'products' => $productsOutput,
             );
+<<<<<<< HEAD
 
 
         }
         return $this->json($output, 200);
+=======
+            
+
+        }
+
+        return $this->json($output, 200);
+
+>>>>>>> bc86cf45b9d3db376b0beaf58639c9b87c23fa5f
     }
 
     /**
@@ -110,6 +132,10 @@ class OrderController extends AbstractController
 
         foreach($products as $product) {
             $productsOutput[] = array(
+<<<<<<< HEAD
+=======
+                'id' => $product->getId(),
+>>>>>>> bc86cf45b9d3db376b0beaf58639c9b87c23fa5f
                 'name' => $product->getName(),
                 'description' => $product->getDescription(),
                 'photo' => $product->getPhoto(),
@@ -118,6 +144,10 @@ class OrderController extends AbstractController
         }
 
         return $this->json([
+<<<<<<< HEAD
+=======
+            'id' => $order->getId(),
+>>>>>>> bc86cf45b9d3db376b0beaf58639c9b87c23fa5f
             'totalPrice' => $order->getTotalPrice(),
             'creationDate' => $order->getCreationDate(),
             'products' => $productsOutput,
