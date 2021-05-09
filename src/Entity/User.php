@@ -6,9 +6,11 @@ use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @ORM\Entity(repositoryClass=UserRepository::class)
+ * 
  */
 class User
 {
@@ -20,7 +22,8 @@ class User
     private $id;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, unique=true)
+     * 
      */
     private $login;
 
@@ -53,6 +56,11 @@ class User
      * @ORM\OneToMany(targetEntity=Order::class, mappedBy="user", orphanRemoval=true)
      */
     private $orders;
+
+    /**
+     * @ORM\Column(type="array", nullable=true)
+     */
+    private $ShoppingCart = [];
 
     public function __construct()
     {
@@ -165,4 +173,33 @@ class User
 
         return $this;
     }
+
+    public function getShoppingCart(): ?array
+    {
+        return $this->ShoppingCart;
+    }
+
+    public function setShoppingCart(?array $ShoppingCart): self
+    {
+        $this->ShoppingCart = $ShoppingCart;
+
+        return $this;
+    }
+
+    public function addToShoppingCart(object $product):self
+    {
+        $this->ShoppingCart[] = $product;
+
+        return $this;
+    }
+
+    public function removeFromShoppingCart(object $product):self{
+        $index = array_search($product, $this->ShoppingCart);
+        unset($this->ShoppingCart[$index]);
+
+        return $this;
+    }
+
+
+
 }

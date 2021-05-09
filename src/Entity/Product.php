@@ -37,6 +37,7 @@ class Product
      */
     private $price;
 
+
     public function getId(): ?int
     {
         return $this->id;
@@ -89,4 +90,5 @@ class Product
 
         return $this;
     }
+
 }
